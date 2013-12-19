@@ -105,3 +105,6 @@ abstract class EntityWrapper extends Entity implements Observable {
 /// [Entity]. This is part of the private interface between [EntityWrapper]
 /// and its subclasses.
 typedef EntityWrapper EntityWrapperCloneFn(Entity delegateClone);
+
+Entity entityWrapperGetDelegateForTest(EntityWrapper wrapped) =>
+    wrapped._delegate;
