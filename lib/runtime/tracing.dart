@@ -5,6 +5,8 @@ typedef bool StreamTraceOverIndicator(TraceEvent event);
 /// An event that occurs during the processing of a particular request. Can be a const singleton
 /// instance or a subclass which contains more data about the event.
 abstract class TraceEvent {
+  const TraceEvent();
+
   String toString();
 }
 

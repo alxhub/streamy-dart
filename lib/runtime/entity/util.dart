@@ -260,7 +260,7 @@ class _ErrorEntity implements Entity {
   toString() => "Internal Streamy sentinel value - should not be exposed.";
 }
 
-class BeginDeserializeTraceEvent {
+class BeginDeserializeTraceEvent extends TraceEvent {
   final int bytes;
 
   BeginDeserializeTraceEvent(this.bytes);
@@ -268,7 +268,7 @@ class BeginDeserializeTraceEvent {
   String toString() => 'streamy.deserialize.begin($bytes)';
 }
 
-class JsonParsedTraceEvent {
+class JsonParsedTraceEvent extends TraceEvent {
   factory JsonParsedTraceEvent() =>
       const JsonParsedTraceEvent._internal();
 
@@ -277,7 +277,7 @@ class JsonParsedTraceEvent {
   String toString() => 'streamy.deserialize.end';
 }
 
-class EndDeserializeTraceEvent {
+class EndDeserializeTraceEvent extends TraceEvent {
   factory EndDeserializeTraceEvent() =>
       const EndDeserializeTraceEvent._internal();
 
@@ -289,17 +289,7 @@ class EndDeserializeTraceEvent {
 const _INTERNAL_ERROR = const Response(null, Source.ERROR, 0);
 
 /// Walk a map-like structure through a list of keys, beginning with an initial value.
-_walk(initial, List<String> pieces) {
-  int len = pieces.length;
-  var current = initial;
-  for (int i = 0; i < len; i++) {
-    if (current == null) {
-      return null;
-    }
-    String piece = pieces[i];
-    current = current[piece];
-  }
-  return current;
-}
+_walk(initial, pieces) => pieces.fold(initial,
+      (current, keyPiece) => current != null ? current[keyPiece] : null);
 
 freezeForTest(entity) => entity._freeze();
