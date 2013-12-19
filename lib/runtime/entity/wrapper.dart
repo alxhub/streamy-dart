@@ -53,6 +53,8 @@ abstract class EntityWrapper extends Entity implements Observable {
 
   bool get isFrozen => _delegate.isFrozen;
 
+  int get serializedSize => _delegate.serializedSize;
+
   void _freeze() => _delegate._freeze();
 
   bool containsKey(String key) => _delegate.containsKey(key);

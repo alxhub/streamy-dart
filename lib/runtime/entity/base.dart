@@ -17,6 +17,9 @@ abstract class Entity {
   /// Whether this entity is frozen (read only).
   bool get isFrozen;
 
+  /// The serialized size of this entity, in JSON bytes (or null if not known).
+  int get serializedSize;
+
   /// Deep freeze (ha!) this entity to no longer allow changes.
   void _freeze();
 

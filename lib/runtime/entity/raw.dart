@@ -4,15 +4,15 @@ part of streamy.runtime;
 /// accessing field values.
 class RawEntity extends Entity implements Map, Observable {
 
-  RawEntity() : super.base() {
+  RawEntity({this.serializedSize}) : super.base() {
     _data = new ObservableMap();
   }
 
-  RawEntity.fromMap(Map map) : super.base() {
+  RawEntity.fromMap(Map map, {this.serializedSize}) : super.base() {
     _data = toObservable(map);
   }
 
-  RawEntity.wrapMap(ObservableMap map) : super.base() {
+  RawEntity.wrapMap(ObservableMap map, {this.serializedSize}) : super.base() {
     _data = map;
   }
 
@@ -43,6 +43,8 @@ class RawEntity extends Entity implements Map, Observable {
   }
 
   ObservableMap<String, dynamic> _local;
+
+  final int serializedSize;
 
   /// Local data.
   Map<String, dynamic> get local {

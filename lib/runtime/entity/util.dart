@@ -260,6 +260,32 @@ class _ErrorEntity implements Entity {
   toString() => "Internal Streamy sentinel value - should not be exposed.";
 }
 
+class BeginDeserializeTraceEvent {
+  final int bytes;
+
+  BeginDeserializeTraceEvent(this.bytes);
+
+  String toString() => 'streamy.deserialize.begin($bytes)';
+}
+
+class JsonParsedTraceEvent {
+  factory JsonParsedTraceEvent() =>
+      const JsonParsedTraceEvent._internal();
+
+  const JsonParsedTraceEvent._internal();
+
+  String toString() => 'streamy.deserialize.end';
+}
+
+class EndDeserializeTraceEvent {
+  factory EndDeserializeTraceEvent() =>
+      const EndDeserializeTraceEvent._internal();
+
+  const EndDeserializeTraceEvent._internal();
+
+  String toString() => 'streamy.deserialize.end';
+}
+
 const _INTERNAL_ERROR = const Response(null, Source.ERROR, 0);
 
 /// Walk a map-like structure through a list of keys, beginning with an initial value.

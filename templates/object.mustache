@@ -52,8 +52,14 @@ class {{name}} extends streamy.EntityWrapper {
 {{/properties}}
 
   factory {{name}}.fromJsonString(String strJson, streamy.Trace trace,
-      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) =>
-          new {{name}}.fromJson(streamy.jsonParse(strJson), typeRegistry: typeRegistry);
+      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) {
+      trace.record(new streamy.BeginDeserializeTraceEvent(strJson.length));
+      var parsed = streamy.jsonParse(strJson);
+      trace.record(new streamy.JsonParsedTraceEvent());
+      var res = new {{name}}.fromJson(parsed, typeRegistry: typeRegistry);
+      trace.record(new streamy.EndDeserializeTraceEvent());
+      return res;
+  }
 
   static {{name}} entityFactory(Map json, streamy.TypeRegistry reg) =>
       new {{name}}.fromJson(json, typeRegistry: reg);
