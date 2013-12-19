@@ -96,8 +96,14 @@ class Foo extends streamy.EntityWrapper {
   }
   List<int> removeCorge() => this.remove(r'corge');
   factory Foo.fromJsonString(String strJson, streamy.Trace trace,
-      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) =>
-          new Foo.fromJson(streamy.jsonParse(strJson), typeRegistry: typeRegistry);
+      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) {
+      trace.record(new streamy.BeginDeserializeTraceEvent(strJson.length));
+      var parsed = streamy.jsonParse(strJson);
+      trace.record(new streamy.JsonParsedTraceEvent());
+      var res = new Foo.fromJson(parsed, typeRegistry: typeRegistry);
+      trace.record(new streamy.EndDeserializeTraceEvent());
+      return res;
+  }
   static Foo entityFactory(Map json, streamy.TypeRegistry reg) =>
       new Foo.fromJson(json, typeRegistry: reg);
   factory Foo.fromJson(Map json,
@@ -188,8 +194,14 @@ class Bar extends streamy.EntityWrapper {
   }
   Foo removeFoo() => this.remove(r'foo');
   factory Bar.fromJsonString(String strJson, streamy.Trace trace,
-      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) =>
-          new Bar.fromJson(streamy.jsonParse(strJson), typeRegistry: typeRegistry);
+      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) {
+      trace.record(new streamy.BeginDeserializeTraceEvent(strJson.length));
+      var parsed = streamy.jsonParse(strJson);
+      trace.record(new streamy.JsonParsedTraceEvent());
+      var res = new Bar.fromJson(parsed, typeRegistry: typeRegistry);
+      trace.record(new streamy.EndDeserializeTraceEvent());
+      return res;
+  }
   static Bar entityFactory(Map json, streamy.TypeRegistry reg) =>
       new Bar.fromJson(json, typeRegistry: reg);
   factory Bar.fromJson(Map json,

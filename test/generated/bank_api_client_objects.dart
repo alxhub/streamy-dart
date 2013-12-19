@@ -58,8 +58,14 @@ class Branch extends streamy.EntityWrapper {
   }
   Address removeLocation() => this.remove(r'location');
   factory Branch.fromJsonString(String strJson, streamy.Trace trace,
-      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) =>
-          new Branch.fromJson(streamy.jsonParse(strJson), typeRegistry: typeRegistry);
+      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) {
+      trace.record(new streamy.BeginDeserializeTraceEvent(strJson.length));
+      var parsed = streamy.jsonParse(strJson);
+      trace.record(new streamy.JsonParsedTraceEvent());
+      var res = new Branch.fromJson(parsed, typeRegistry: typeRegistry);
+      trace.record(new streamy.EndDeserializeTraceEvent());
+      return res;
+  }
   static Branch entityFactory(Map json, streamy.TypeRegistry reg) =>
       new Branch.fromJson(json, typeRegistry: reg);
   factory Branch.fromJson(Map json,
@@ -125,8 +131,14 @@ class Address extends streamy.EntityWrapper {
   Address.wrap(streamy.Entity entity, streamy.EntityWrapperCloneFn cloneWrapper) :
       super.wrap(entity, (cloned) => cloneWrapper(cloned), globals: _globals);
   factory Address.fromJsonString(String strJson, streamy.Trace trace,
-      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) =>
-          new Address.fromJson(streamy.jsonParse(strJson), typeRegistry: typeRegistry);
+      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) {
+      trace.record(new streamy.BeginDeserializeTraceEvent(strJson.length));
+      var parsed = streamy.jsonParse(strJson);
+      trace.record(new streamy.JsonParsedTraceEvent());
+      var res = new Address.fromJson(parsed, typeRegistry: typeRegistry);
+      trace.record(new streamy.EndDeserializeTraceEvent());
+      return res;
+  }
   static Address entityFactory(Map json, streamy.TypeRegistry reg) =>
       new Address.fromJson(json, typeRegistry: reg);
   factory Address.fromJson(Map json,
@@ -224,8 +236,14 @@ class Account extends streamy.EntityWrapper {
   }
   fixnum.Int64 removeBalance() => this.remove(r'balance');
   factory Account.fromJsonString(String strJson, streamy.Trace trace,
-      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) =>
-          new Account.fromJson(streamy.jsonParse(strJson), typeRegistry: typeRegistry);
+      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) {
+      trace.record(new streamy.BeginDeserializeTraceEvent(strJson.length));
+      var parsed = streamy.jsonParse(strJson);
+      trace.record(new streamy.JsonParsedTraceEvent());
+      var res = new Account.fromJson(parsed, typeRegistry: typeRegistry);
+      trace.record(new streamy.EndDeserializeTraceEvent());
+      return res;
+  }
   static Account entityFactory(Map json, streamy.TypeRegistry reg) =>
       new Account.fromJson(json, typeRegistry: reg);
   factory Account.fromJson(Map json,
@@ -315,8 +333,14 @@ class Customer extends streamy.EntityWrapper {
   }
   String removeName() => this.remove(r'name');
   factory Customer.fromJsonString(String strJson, streamy.Trace trace,
-      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) =>
-          new Customer.fromJson(streamy.jsonParse(strJson), typeRegistry: typeRegistry);
+      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) {
+      trace.record(new streamy.BeginDeserializeTraceEvent(strJson.length));
+      var parsed = streamy.jsonParse(strJson);
+      trace.record(new streamy.JsonParsedTraceEvent());
+      var res = new Customer.fromJson(parsed, typeRegistry: typeRegistry);
+      trace.record(new streamy.EndDeserializeTraceEvent());
+      return res;
+  }
   static Customer entityFactory(Map json, streamy.TypeRegistry reg) =>
       new Customer.fromJson(json, typeRegistry: reg);
   factory Customer.fromJson(Map json,

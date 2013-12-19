@@ -52,8 +52,14 @@ class Foo extends streamy.EntityWrapper {
   }
   String removeBar() => this.remove(r'bar');
   factory Foo.fromJsonString(String strJson, streamy.Trace trace,
-      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) =>
-          new Foo.fromJson(streamy.jsonParse(strJson), typeRegistry: typeRegistry);
+      {streamy.TypeRegistry typeRegistry: streamy.EMPTY_REGISTRY}) {
+      trace.record(new streamy.BeginDeserializeTraceEvent(strJson.length));
+      var parsed = streamy.jsonParse(strJson);
+      trace.record(new streamy.JsonParsedTraceEvent());
+      var res = new Foo.fromJson(parsed, typeRegistry: typeRegistry);
+      trace.record(new streamy.EndDeserializeTraceEvent());
+      return res;
+  }
   static Foo entityFactory(Map json, streamy.TypeRegistry reg) =>
       new Foo.fromJson(json, typeRegistry: reg);
   factory Foo.fromJson(Map json,
