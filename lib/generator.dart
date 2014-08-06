@@ -8,6 +8,7 @@ import 'package:mustache/mustache.dart' as mustache;
 import 'package:quiver/strings.dart' as strings;
 import 'package:yaml/yaml.dart' as yaml;
 import 'package:path/path.dart' as path;
+import 'package:quiver/core.dart' as quiver;
 import 'package:streamy/google/protobuf/descriptor.pb.dart' as protoSchema;
 
 part 'generator/ast.dart';

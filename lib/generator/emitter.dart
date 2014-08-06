@@ -257,7 +257,7 @@ class Emitter {
           defaultValue: new DartConstantBody('const streamy.NoopTracer()')))
       ..namedParameters.add(new DartNamedParameter('marshaller', marshallerType,
           isDirectAssignment: true,
-          defaultValue: new DartConstantBody('const ${marshallerType}()')));
+          defaultValue: new DartConstantBody('const $marshallerType.simple()')));
     if (api.httpConfig != null) {
       ctor.namedParameters.add(new DartNamedParameter('servicePath',
           const DartType.string(),
@@ -567,20 +567,31 @@ class Emitter {
   DartClass processMarshaller(Api api, String objectPrefix) {
     var marshallerClass = new DartClass('Marshaller');
     var simpleTmpl = _template('marshaller_ctor_simple');
-    var simpleDeps = api
-      .dependencies
-      .map((dep) => {'prefix': dep.prefix, 'last': false})
-      .toList();
+    var simpleDeps = [];
+    var ctor = new DartConstructor(marshallerClass.name, isConst: true);
+    api.dependencies.forEach((dep) {
+      simpleDeps.add({'prefix': dep.prefix, 'last': false});
+      var mName = '${dep.prefix}Marshaller';
+      var mType = new DartType('Marshaller', dep.prefix);
+      marshallerClass.fields.add(new DartSimpleField(mName, mType));
+      ctor.parameters.add(new DartParameter(mName, mType, isDirectAssignment: true));
+    });
     if (!simpleDeps.isEmpty) {
       simpleDeps.last['last'] = true;
     }
-    var ctor = new DartConstructor(marshallerClass.name, named: 'simple',
+    var simpleCtor = new DartConstructor(marshallerClass.name, named: 'simple',
         body: new DartTemplateBody(simpleTmpl, {
           'deps': simpleDeps
-        }));
-    marshallerClass.methods.add(new DartConstructor(marshallerClass.name, isConst: true));
+        }), isConst: true);
+    marshallerClass.methods.add(simpleCtor);
+    marshallerClass.methods.add(ctor);
+    var depRefs = <DependencyTypeRef>[];
     api.types.values.forEach((schema) =>
-        processSchemaForMarshaller(marshallerClass, schema, objectPrefix));
+        processSchemaForMarshaller(marshallerClass, schema, objectPrefix, depRefs));
+    marshallerClass.methods.addAll(depRefs
+      .toSet()
+      .map((dep) => _handleMethodFor(dep.schemaClass,
+          depPrefix: dep.importedFrom)));
     return marshallerClass;
   }
 
@@ -661,7 +672,7 @@ class Emitter {
     return new SchemaDefinition(clazz, globalFnDef);
   }
 
-  _accumulateMarshallingTypes(String name, TypeRef typeRef, List<String> int64Fields, List<String> doubleFields, Map entityFields) {
+  _accumulateMarshallingTypes(String name, TypeRef typeRef, List<String> int64Fields, List<String> doubleFields, Map entityFields, List depRefs) {
     switch (typeRef.base) {
       case 'int64':
         int64Fields.add(name);
@@ -672,13 +683,17 @@ class Emitter {
       case 'schema':
         entityFields[name] = typeRef.schemaClass;
         break;
+      case 'dependency':
+        entityFields[name] = '${typeRef.importedFrom}_${typeRef.schemaClass}';
+        depRefs.add(typeRef);
+        break;
       case 'list':
-        _accumulateMarshallingTypes(name, typeRef.subType, int64Fields, doubleFields, entityFields);
+        _accumulateMarshallingTypes(name, typeRef.subType, int64Fields, doubleFields, entityFields, depRefs);
         break;
     }
   }
 
-  void processSchemaForMarshaller(DartClass clazz, Schema schema, String objectPrefix) {
+  void processSchemaForMarshaller(DartClass clazz, Schema schema, String objectPrefix, List<DependencyTypeRef> depRefs) {
     var name = toProperIdentifier(schema.name);
     var type = new DartType(name, objectPrefix, const []);
     var rt = new DartType.map(const DartType.string(), const DartType.dynamic());
@@ -696,7 +711,7 @@ class Emitter {
     schema
       .properties
       .forEach((_, field) {
-        _accumulateMarshallingTypes(field.name, field.typeRef, int64Fields, doubleFields, entityFields);
+        _accumulateMarshallingTypes(field.name, field.typeRef, int64Fields, doubleFields, entityFields, depRefs);
         allFields.add({'key': field.name, 'identifier': toProperIdentifier(field.name, firstLetter: false)});
       });
 
@@ -749,12 +764,23 @@ class Emitter {
     clazz.methods.add(new DartMethod('unmarshal$name', type,
         new DartTemplateBody(unmarshal, serializerConfig))
       ..parameters.add(new DartParameter('data', rt)));
-    clazz.methods.add(new DartMethod('_handle$name', const DartType.dynamic(), new DartTemplateBody(_template('marshal_handle'), {
-        'type': name
+    clazz.methods.add(_handleMethodFor(name));
+  }
+  
+  DartMethod _handleMethodFor(String name, {String depPrefix}) {
+    var localName = name;
+    if (depPrefix != null) {
+      localName = '${depPrefix}_$name';
+    }
+    localName = toProperIdentifier(localName);
+    return new DartMethod('_handle$localName', const DartType.dynamic(), new DartTemplateBody(_template('marshal_handle'), {
+        'type': toProperIdentifier(name),
+        'dep': depPrefix != null,
+        'prefix': depPrefix
       }), isStatic: true)
         ..parameters.add(new DartParameter('marshaller', new DartType('Marshaller', null, const [])))
         ..parameters.add(new DartParameter('data', const DartType.dynamic()))
-        ..parameters.add(new DartParameter('marshal', const DartType.boolean())));
+        ..parameters.add(new DartParameter('marshal', const DartType.boolean()));
   }
 
   void addApiType(DartClass clazz) {
@@ -812,6 +838,7 @@ class Emitter {
         case 'number':
           return const DartType.double();
         case 'external':
+        case 'dependency':
           return new DartType(ref.type, ref.importedFrom, const []);
         default:
           throw new Exception('Unhandled API type: $ref');

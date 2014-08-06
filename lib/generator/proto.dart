@@ -30,6 +30,10 @@ Future<Api> fromProto(ProtoConfig config) {
   if (!protoPath.endsWith('/')) {
     protoPath = '$protoPath/';
   }
+  
+  var importMap = {};
+  config.dependencies.forEach((package, dep) =>
+      importMap[package] = dep.prefix);
   var protocArgs = ['-o/dev/stdout', '--proto_path=$protoPath',
       '$protoPath${config.sourceFile}'];
   return io.Process
@@ -43,6 +47,7 @@ Future<Api> fromProto(ProtoConfig config) {
     .then((data) => new protoSchema.FileDescriptorSet.fromBuffer(data))
     .then((proto) => proto.file.single)
     .then((proto) {
+      importMap[proto.package] = '';
       var deps = config.dependencies.values.toList();
       var api = new Api(config.name, dependencies: deps);
       proto.messageType.forEach((message) {
@@ -60,7 +65,7 @@ Future<Api> fromProto(ProtoConfig config) {
               type = const TypeRef.string();
               break;
             case protoSchema.FieldDescriptorProto_Type.TYPE_MESSAGE:
-              type = _toProtoSchemaRef(config,
+              type = _toProtoSchemaRef(importMap,
                   new ProtoRef.fromString(field.typeName));
               break;
             default:
@@ -90,14 +95,18 @@ Future<Api> fromProto(ProtoConfig config) {
     });
 }
 
-SchemaTypeRef _toProtoSchemaRef(ProtoConfig config, ProtoRef ref) {
+SchemaTypeRef _toProtoSchemaRef(Map imports, ProtoRef ref) {
   if (ref.package.isEmpty) {
     // Local import case.
     return new TypeRef.schema(ref.messageType);
   }
   var package = ref.packageString;
-  if (!config.dependencies.containsKey(package)) {
+  if (!imports.containsKey(package)) {
     throw new Exception('Unknown imported package: $package');
   }
-  return new TypeRef.external(ref.messageType, config.dependencies[package].prefix);
+  if (imports[package] == '') {
+    // Also a local case.
+    return new TypeRef.schema(ref.messageType);
+  }
+  return new TypeRef.dependency(ref.messageType, imports[package]);
 }

@@ -136,7 +136,8 @@ class TypeRef {
       new SchemaTypeRef(schemaClass);
   factory TypeRef.external(String type, String importedFrom) =>
       new ExternalTypeRef(type, importedFrom);
-  
+  factory TypeRef.dependency(String type, String importedFrom) =>
+      new DependencyTypeRef(type, importedFrom);
       
   String toString() => base;
 }
@@ -150,6 +151,21 @@ class ExternalTypeRef implements TypeRef {
   ExternalTypeRef(this.type, this.importedFrom);
   
   String toString() => 'external($type, $importedFrom)';
+}
+
+class DependencyTypeRef extends ExternalTypeRef {
+  String get base => 'dependency';
+  
+  DependencyTypeRef(type, importedFrom) : super(type, importedFrom);
+  
+  String get schemaClass => type;
+  
+  String toString() => 'dep($type, $importedFrom';
+  
+  int get hashCode => quiver.hash2(type, importedFrom);
+  
+  bool operator==(other) => other != null && other is DependencyTypeRef &&
+      other.type == type && other.importedFrom == importedFrom;
 }
 
 class SchemaTypeRef implements TypeRef {
