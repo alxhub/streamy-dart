@@ -30,8 +30,9 @@ class ProtoConfig {
   final String name;
   final String sourceFile;
   final String root;
+  final Map<String, Dependency> dependencies;
   
-  ProtoConfig(this.name, this.sourceFile, this.root);
+  ProtoConfig(this.name, this.sourceFile, this.root, this.dependencies);
 }
 
 class Config {
@@ -114,7 +115,31 @@ Config parseConfigOrDie(Map data) {
     if (!source.containsKey('root')) {
       _die('Missing proto root.');
     }
-    config.proto = new ProtoConfig(proto['name'], source['file'], source['root']);
+    var deps = <String, Dependency>{};
+    if (proto.containsKey('dependencies')) {
+      proto['dependencies'].forEach((rawDep) {
+        if (!rawDep.containsKey('prefix')) {
+          _die('Missing prefix for dependency.');
+        }
+        var prefix = rawDep['prefix'];
+        var schemaImport, marshallerImport;
+        if (!rawDep.containsKey('import')) {
+          if (!rawDep.containsKey('schemaImport') || !rawDep.containsKey('marshallerImport')) {
+            _die('Must specify either import or both schemaImport and marshallerImport for dependency.');
+          }
+          schemaImport = rawDep['schemaImport'];
+          marshallerImport = rawDep['marshallerImport'];
+        } else {
+          schemaImport = rawDep['import'];
+          marshallerImport = rawDep['import'];
+        }
+        if (!rawDep.containsKey('package')) {
+          _die('Missing proto package for dependency.'); 
+        }
+        deps[rawDep['package']] = new Dependency(prefix, marshallerImport, schemaImport);
+      });
+    }
+    config.proto = new ProtoConfig(proto['name'], source['file'], source['root'], deps);
   }
   
   if (config.discoveryFile == null && config.service == null && config.proto == null) {

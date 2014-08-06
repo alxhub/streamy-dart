@@ -30,6 +30,7 @@ class Emitter {
     'marshal',
     'marshal_handle',
     'marshal_mapbacked',
+    'marshaller_ctor_simple',
     'object_add_global',
     'object_clone',
     'object_ctor',
@@ -93,6 +94,14 @@ class Emitter {
         objectFile = rootFile;
         dispatchFile = rootFile;
         client = new StreamyClient(config, rootFile, null, null, null, null);
+        api.dependencies.forEach((dep) {
+          if (dep.separateImports) {
+            rootFile.imports[dep.marshallerImport] = '${dep.prefix}_dispatch';
+            rootFile.imports[dep.schemaImport] = '${dep.prefix}_objects';
+          } else {
+            rootFile.imports[dep.marshallerImport] = dep.prefix;
+          }
+        });
         break;
       case SPLIT_LEVEL_PARTS:
         resourceFile = new DartLibraryPart(rootFile.libraryName,
@@ -106,6 +115,14 @@ class Emitter {
         rootFile.parts.addAll([resourceFile, requestFile, objectFile, dispatchFile]);
         out.addAll([resourceFile, requestFile, objectFile, dispatchFile]);
         client = new StreamyClient(config, rootFile, resourceFile, requestFile, objectFile, dispatchFile);
+        api.dependencies.forEach((dep) {
+          if (dep.separateImports) {
+            rootFile.imports[dep.marshallerImport] = '${dep.prefix}_dispatch';
+            rootFile.imports[dep.schemaImport] = '${dep.prefix}_objects';
+          } else {
+            rootFile.imports[dep.marshallerImport] = dep.prefix;
+          }
+        });
         break;
       case SPLIT_LEVEL_LIBS:
         resourceFile = new DartLibrary('$libPrefix.resources');
@@ -116,6 +133,18 @@ class Emitter {
         requestPrefix = 'requests';
         objectPrefix = 'objects';
         dispatchPrefix = 'dispatch';
+        
+        var objectImports = {};
+        var dispatchImports = {};
+        api.dependencies.forEach((dep) {
+          if (dep.separateImports) {
+            dispatchImports[dep.marshallerImport] = '${dep.prefix}_dispatch';
+            objectImports[dep.schemaImport] = '${dep.prefix}_objects';
+          } else {
+            dispatchImports[dep.marshallerImport] = dep.prefix;
+            objectImports[dep.marshallerImport] = dep.prefix;
+          }
+        });
         rootFile.imports
           ..[importPath('resources.dart')] = 'resources'
           ..[importPath('dispatch.dart')] = 'dispatch';
@@ -124,23 +153,27 @@ class Emitter {
           ..['package:fixnum/fixnum.dart'] = 'fixnum'
           ..[config.baseImport] = 'base'
           ..[importPath('requests.dart')] = 'requests'
-          ..[importPath('objects.dart')] = 'objects';
+          ..[importPath('objects.dart')] = 'objects'
+          ..addAll(objectImports);
         requestFile.imports
           ..['package:streamy/streamy.dart'] = 'streamy'
           ..['package:fixnum/fixnum.dart'] = 'fixnum'
           ..[config.baseImport] = 'base'
           ..[importPath('objects.dart')] = 'objects'
           ..[importPath('dispatch.dart')] = 'dispatch'
-          ..['dart:async'] = null;
+          ..['dart:async'] = null
+          ..addAll(objectImports);
         objectFile.imports
           ..['package:streamy/streamy.dart'] = 'streamy'
           ..['package:fixnum/fixnum.dart'] = 'fixnum'
-          ..[config.baseImport] = 'base';
+          ..[config.baseImport] = 'base'
+          ..addAll(objectImports);
         dispatchFile.imports
           ..['package:streamy/streamy.dart'] = 'streamy'
           ..['package:fixnum/fixnum.dart'] = 'fixnum'
           ..[config.baseImport] = 'base'
-          ..[importPath('objects.dart')] = 'objects';
+          ..[importPath('objects.dart')] = 'objects'
+          ..addAll(dispatchImports);
         out.addAll([resourceFile, requestFile, objectFile, dispatchFile]);
         resourceFile.imports.addAll(api.imports);
         requestFile.imports.addAll(api.imports);
@@ -533,6 +566,18 @@ class Emitter {
 
   DartClass processMarshaller(Api api, String objectPrefix) {
     var marshallerClass = new DartClass('Marshaller');
+    var simpleTmpl = _template('marshaller_ctor_simple');
+    var simpleDeps = api
+      .dependencies
+      .map((dep) => {'prefix': dep.prefix, 'last': false})
+      .toList();
+    if (!simpleDeps.isEmpty) {
+      simpleDeps.last['last'] = true;
+    }
+    var ctor = new DartConstructor(marshallerClass.name, named: 'simple',
+        body: new DartTemplateBody(simpleTmpl, {
+          'deps': simpleDeps
+        }));
     marshallerClass.methods.add(new DartConstructor(marshallerClass.name, isConst: true));
     api.types.values.forEach((schema) =>
         processSchemaForMarshaller(marshallerClass, schema, objectPrefix));

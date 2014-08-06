@@ -2,7 +2,11 @@ proto:
   name: TestProto
   source:
     file: proto_test.proto
-    root: $CWD/test/generated/
+    root: $CWD/test/generated
+  dependencies:
+    - prefix: test_import_prefix
+      import: import_test_client.dart
+      package: proto_test.import_test
 output:
   files: single
   prefix: proto_client

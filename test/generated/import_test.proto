@@ -1,0 +1,5 @@
+package proto_test.import_test;
+
+message Imported {
+  optional string from = 1;
+}

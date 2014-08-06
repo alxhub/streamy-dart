@@ -1,5 +1,7 @@
 package proto_test;
 
+import "import_test.proto";
+
 message Foo {
   optional int64 id = 1;
   optional string name = 2;
@@ -9,4 +11,10 @@ message Foo {
 message Bar {
   optional int64 id = 1;
   optional string name = 2;
+  optional import_test.Imported other = 3;
+}
+
+service TestService {
+  rpc Get (Bar) returns (Foo);
+  rpc Put (Foo) returns (Foo);
 }

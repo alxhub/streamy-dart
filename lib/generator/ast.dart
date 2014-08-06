@@ -8,11 +8,12 @@ class Api {
   final bool marshalling;
   /// External imports.
   final Map<String, String> imports = <String, String>{};
+  final List<Dependency> dependencies;
   final Map<String, Schema> types = <String, Schema>{};
   final Map<String, Resource> resources = <String, Resource>{};
   
   Api(this.name, {this.description, this.docLink, this.httpConfig,
-      this.marshalling: true});
+      this.marshalling: true, this.dependencies: const <Dependency>[]});
   
   String toString() {
     var sb = new StringBuffer()
@@ -22,6 +23,16 @@ class Api {
     sb.writeln();
     return sb.toString();
   }
+}
+
+class Dependency {
+  final String prefix;
+  final String marshallerImport;
+  final String schemaImport;
+  
+  Dependency(this.prefix, this.marshallerImport, this.schemaImport);
+  
+  bool get separateImports => marshallerImport != schemaImport;
 }
 
 class Schema {
