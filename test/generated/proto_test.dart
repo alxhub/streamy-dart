@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:unittest/unittest.dart';
 import 'package:streamy/streamy.dart';
 import 'proto_client.dart';
+import 'import_test_client.dart' as itc;
 
 main() {
   group('ProtoTest', () {
@@ -32,6 +33,19 @@ main() {
       expect(f2.other, hasLength(2));
       expect(f2.other[0].name, 'Bar #1');
       expect(f2.other[1].name, 'Bar #2');
+    });
+    test('Serializes dependency', () {
+      f.other[0].other = new itc.Imported()
+        ..from = 'Original test';
+      var fm = m.marshalFoo(f);
+      expect(fm, contains('3'));
+      var other = fm['3'];
+      expect(other, isList);
+      expect(other, hasLength(2));
+      var first = other.first;
+      expect(first, contains('3'));
+      var imported = first['3'];
+      expect(imported, containsPair('1', 'Original test'));
     });
   });
 }

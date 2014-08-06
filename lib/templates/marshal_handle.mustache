@@ -1,1 +1,1 @@
-=> marshal ? {{#dep}}{{prefix}}M{{/dep}}{{^dep}}m{{/dep}}arshaller.marshal{{type}}(data) : {{#dep}}{{prefix}}M{{/dep}}{{^dep}}m{{/dep}}arshaller.unmarshal{{type}}(data);
+=> marshal ? marshaller{{#dep}}.{{prefix}}Marshaller{{/dep}}.marshal{{type}}(data) : marshaller{{#dep}}.{{prefix}}Marshaller{{/dep}}.unmarshal{{type}}(data);
