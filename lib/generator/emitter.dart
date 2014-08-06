@@ -257,7 +257,7 @@ class Emitter {
           defaultValue: new DartConstantBody('const streamy.NoopTracer()')))
       ..namedParameters.add(new DartNamedParameter('marshaller', marshallerType,
           isDirectAssignment: true,
-          defaultValue: new DartConstantBody('const $marshallerType.simple()')));
+          defaultValue: new DartConstantBody('const $marshallerType()')));
     if (api.httpConfig != null) {
       ctor.namedParameters.add(new DartNamedParameter('servicePath',
           const DartType.string(),
@@ -567,23 +567,13 @@ class Emitter {
   DartClass processMarshaller(Api api, String objectPrefix) {
     var marshallerClass = new DartClass('Marshaller');
     var simpleTmpl = _template('marshaller_ctor_simple');
-    var simpleDeps = [];
     var ctor = new DartConstructor(marshallerClass.name, isConst: true);
     api.dependencies.forEach((dep) {
-      simpleDeps.add({'prefix': dep.prefix, 'last': false});
       var mName = '${dep.prefix}Marshaller';
       var mType = new DartType('Marshaller', dep.prefix);
-      marshallerClass.fields.add(new DartSimpleField(mName, mType));
-      ctor.parameters.add(new DartParameter(mName, mType, isDirectAssignment: true));
+      marshallerClass.fields.add(new DartSimpleField(mName, mType, isFinal: true));
+      ctor.namedParameters.add(new DartNamedParameter(mName, mType, isDirectAssignment: true, defaultValue: new DartConstantBody('const $mType()')));
     });
-    if (!simpleDeps.isEmpty) {
-      simpleDeps.last['last'] = true;
-    }
-    var simpleCtor = new DartConstructor(marshallerClass.name, named: 'simple',
-        body: new DartTemplateBody(simpleTmpl, {
-          'deps': simpleDeps
-        }), isConst: true);
-    marshallerClass.methods.add(simpleCtor);
     marshallerClass.methods.add(ctor);
     var depRefs = <DependencyTypeRef>[];
     api.types.values.forEach((schema) =>
