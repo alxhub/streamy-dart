@@ -34,6 +34,9 @@ main() {
       expect(f2.other[0].name, 'Bar #1');
       expect(f2.other[1].name, 'Bar #2');
     });
+    test('Typed fields are generated correctly.', () {
+      
+    });
     test('Serializes dependency', () {
       f.other[0].other = new itc.Imported()
         ..from = 'Original test';

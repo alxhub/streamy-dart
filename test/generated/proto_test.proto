@@ -14,6 +14,12 @@ message Bar {
   optional import_test.Imported other = 3;
 }
 
+message Baz {
+  optional int32 i32 = 1;
+  optional int64 i64 = 2;
+  optional string str = 3;
+}
+
 service TestService {
   rpc Get (Bar) returns (Foo);
   rpc Put (Foo) returns (Foo);
