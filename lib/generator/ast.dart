@@ -9,6 +9,7 @@ class Api {
   /// External imports.
   final Map<String, String> imports = <String, String>{};
   final List<Dependency> dependencies;
+  final List<Enum> enums = <Enum>[];
   final Map<String, Schema> types = <String, Schema>{};
   final Map<String, Resource> resources = <String, Resource>{};
   
@@ -33,6 +34,30 @@ class Dependency {
   Dependency(this.prefix, this.marshallerImport, this.schemaImport);
   
   bool get separateImports => marshallerImport != schemaImport;
+
+  String toString() =>
+      "  Dependency: $prefix (marshaller: $marshallerImport, schema: $schemaImport)";
+}
+
+class Enum {
+  final String name;
+  final List<EnumValue> values = <EnumValue>[];
+  
+  Enum(this.name);
+  
+  String toString() {
+    var sb = new StringBuffer()
+      ..writeln("  Enum: $name");
+    values.forEach((v) => sb.writeln("    [${v.index}: ${v.name} (${v.description})"));
+  }
+}
+
+class EnumValue {
+  final String name;
+  final String description;
+  final int index;
+  
+  EnumValue(this.name, this.index, {this.description});
 }
 
 class Schema {

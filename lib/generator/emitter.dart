@@ -25,6 +25,7 @@ class Emitter {
   Emitter(this.config, this.templates);
   
   static final List<String> TEMPLATES = const [
+    'enum_values',
     'lazy_resource_getter',
     'map',
     'marshal',
@@ -191,6 +192,7 @@ class Emitter {
     requestFile.classes.addAll(processRequests(api, objectPrefix, dispatchPrefix));
     var schemas = processSchemas(api);
     objectFile.classes.addAll(schemas.map((schema) => schema.clazz));
+    objectFile.classes.addAll(processEnums(api));
     objectFile.typedefs.addAll(schemas.map((schema) => schema.globalDef).where((v) => v != null));
     dispatchFile.classes.add(processMarshaller(api, objectPrefix));
     return client;
@@ -557,6 +559,27 @@ class Emitter {
     
     return clazz;
   }
+  
+  List<DartClass> processEnums(Api api) => api
+    .enums
+    .map((enum) => new DartClass(enum.name)
+        ..fields.add(
+          new DartSimpleField('index', new DartType.integer(), isFinal: true))
+        ..methods.add(
+          new DartConstructor(enum.name, named: '_private', isConst: true)
+            ..parameters.add(new DartParameter('index', new DartType.integer(),
+                isDirectAssignment: true )))
+        ..fields.addAll(enum.values.map((value) =>
+            new DartSimpleField(value.name, new DartType(enum.name),
+            isStatic: true, isFinal: true, initializer: new DartConstantBody(
+                'const ${enum.name}._private(${value.index})'))))
+        ..fields.add(new DartSimpleField('values', new DartType.list(
+            new DartType(enum.name)), isStatic: true, isFinal: true, initializer:
+                new DartTemplateBody(_template('enum_values'), {
+                  'type': enum.name,
+                  'values': enum.values.map((v) => {'value': v.name}).toList()
+                })))
+        );
   
   List<SchemaDefinition> processSchemas(Api api) => api
     .types

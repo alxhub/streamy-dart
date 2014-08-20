@@ -52,6 +52,13 @@ Future<Api> fromProto(ProtoConfig config) {
       var api = new Api(config.name, dependencies: deps);
       proto.messageType.forEach((message) {
         var schema = new Schema(message.name);
+        message.enumType.forEach((enumType) {
+          var enum = new Enum('${message.name}_${enumType.name}');
+          enum.values.addAll(enumType.value.map((value) =>
+            new EnumValue(value.name, value.number)
+          ));
+          api.enums.add(enum);
+        });
         message.field.forEach((field) {
           var type = const TypeRef.any();
           switch (field.type) {

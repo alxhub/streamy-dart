@@ -18,6 +18,14 @@ message Baz {
   optional int32 i32 = 1;
   optional int64 i64 = 2;
   optional string str = 3;
+  
+  enum TestEnum {
+    ALPHA = 0;
+    BETA = 1;
+    GAMMA = 2;
+    // Skipped 3.
+    DELTA = 4;
+  }
 }
 
 service TestService {
