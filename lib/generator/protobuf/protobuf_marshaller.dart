@@ -142,7 +142,7 @@ class ProtobufMarshallerEmitter
       ..parameters.add(new DartParameter('data', rt)));
     _marshallerClass.methods.add(new DartMethod(makeHandlerName(schema.name),
     const DartType.dynamic(),
-    new DartTemplateBody(templates['marshal_handle'], {'type': name}),
+    new DartTemplateBody(templates['marshal_handle'], {'type': name, 'dep': false}),
     isStatic: true)
       ..parameters.add(new DartParameter('marshaller', new DartType('Marshaller', null, const [])))
       ..parameters.add(new DartParameter('data', const DartType.dynamic()))
@@ -150,7 +150,7 @@ class ProtobufMarshallerEmitter
   }
 
   _accumulateMarshallingTypes(String name, TypeRef typeRef,
-      List<String> int64Fields, List<String> doubleFields, Map entityFields, List<DependencyTypeRef> depRef) {
+      List<String> int64Fields, List<String> doubleFields, Map entityFields, List<DependencyTypeRef> depRefs) {
     switch (typeRef.base) {
       case 'int64':
         int64Fields.add(name);
@@ -167,7 +167,7 @@ class ProtobufMarshallerEmitter
         break;
       case 'list':
         _accumulateMarshallingTypes(name, (typeRef as ListTypeRef).subType,
-        int64Fields, doubleFields, entityFields);
+        int64Fields, doubleFields, entityFields, depRefs);
         break;
     }
   }
@@ -175,36 +175,5 @@ class ProtobufMarshallerEmitter
   
   DartType streamyImport(String clazz, {params: const []}) =>
       new DartType(clazz, 'streamy', params);
-
-  DartType toDartType(TypeRef ref, String objectPrefix) {
-    if (ref is ListTypeRef) {
-      return new DartType.list(toDartType(ref.subType, objectPrefix));
-    } else if (ref is SchemaTypeRef) {
-      return new DartType(toProperIdentifier(ref.schemaClass), objectPrefix, const []);
-    } else {
-      switch (ref.base) {
-        case 'int64':
-          return new DartType('Int64', 'fixnum', const []);
-        case 'integer':
-          return const DartType.integer();
-        case 'string':
-          return const DartType.string();
-        case 'any':
-          return const DartType.dynamic();
-        case 'double':
-          return const DartType.double();
-        case 'boolean':
-          return const DartType.boolean();
-        case 'number':
-          return const DartType.double();
-        case 'external':
-        case 'dependency':
-          return new DartType(ref.type, ref.importedFrom, const []);
-        default:
-          throw new Exception('Unhandled API type: $ref');
-      }
-    }
-  }
-
   mustache.Template _template(String name) => templates[name];
 }

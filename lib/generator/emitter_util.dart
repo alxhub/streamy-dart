@@ -60,6 +60,7 @@ abstract class EmitterBase {
         case 'number':
           return const DartType.double();
         case 'external':
+        case 'dependency':
           ExternalTypeRef externalTypeRef = ref;
           return new DartType(externalTypeRef.type,
           externalTypeRef.importedFrom, const []);

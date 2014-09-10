@@ -205,10 +205,9 @@ class _EmitterContext extends EmitterBase implements EmitterContext {
     }
     var schemas = processSchemas();
     objectFile.classes.addAll(schemas.map((schema) => schema.clazz));
-    objectFile.classes.addAll(processEnums(api));
+    objectFile.classes.addAll(processEnums());
     objectFile.typedefs.addAll(schemas.map((schema) => schema.globalDef)
         .where((v) => v != null));
-    dispatchFile.classes.add(processMarshaller(api, objectPrefix));
     if (config.generateMarshallers) {
       _marshallerEmitter.emit();
     }
