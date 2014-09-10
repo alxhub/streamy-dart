@@ -119,7 +119,7 @@ abstract class HttpRequest implements Request {
     }
   }
 
-  dynamic marshalPayload() => '';
+  dynamic marshalPayload() => jsonMarshal(payload);
 
   dynamic unmarshalResponse(Map data) => null;
 
@@ -262,6 +262,25 @@ abstract class HttpRequest implements Request {
         _payload != null ? (_payload as RawEntity).signature : "null";
     return "$runtimeType|$path|$payloadSig";
   }
+}
+
+class HttpRequestBase<P> extends HttpRequest {
+  final String httpMethod;
+  final String pathFormat;
+  final String apiType;
+  final List<String> pathParameters;
+  final List<String> queryParameters;
+  final bool hasPayload;
+
+  HttpRequestBase.noPayload(HttpRoot root, this.httpMethod, this.pathFormat,
+      this.apiType, this.pathParameters, this.queryParameters)
+          : super(root),
+            hasPayload = false;
+
+  HttpRequestBase.withPayload(HttpRoot root, this.httpMethod, this.pathFormat,
+      this.apiType, this.pathParameters, this.queryParameters, P payload)
+         : super(root, payload),
+           hasPayload = true;
 }
 
 class BranchingRequestHandlerBuilder {

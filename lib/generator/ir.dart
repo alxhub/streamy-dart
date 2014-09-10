@@ -1,5 +1,8 @@
-part of streamy.generator;
+library streamy.generator.ir;
 
+/// Intermediate representation of an API definition. It serves as an
+/// abstraction between a concrete API descriptor (e.g. Google Discovery,
+/// Protocol Buffers) and Streamy's code emitter.
 class Api {
   final String name;
   final String description;
@@ -63,7 +66,7 @@ class EnumValue {
 class Schema {
   final String name;
   final List<TypeRef> mixins = [];
-  
+
   final Map<String, Field> properties = <String, Field>{};
   
   Schema(this.name);
@@ -88,7 +91,7 @@ class Resource {
   final Map<String, Resource> subresources = <String, Resource>{};
   final Map<String, Method> methods = <String, Method>{};
   
-  Resource(this.name);
+  Resource(this.name, {this.description: null});
   
   String toString() => (new StringBuffer()
       ..writeln("  Resource: $name:")
@@ -163,6 +166,9 @@ class TypeRef {
       new ExternalTypeRef(type, importedFrom);
   factory TypeRef.dependency(String type, String importedFrom) =>
       new DependencyTypeRef(type, importedFrom);
+
+  /// The most specific data type referenced by `this`.
+  String get dataType => base;
       
   String toString() => base;
 }
@@ -174,7 +180,9 @@ class ExternalTypeRef implements TypeRef {
   final String importedFrom;
   
   ExternalTypeRef(this.type, this.importedFrom);
-  
+
+  String get dataType => type;
+
   String toString() => 'external($type, $importedFrom)';
 }
 
@@ -198,6 +206,9 @@ class SchemaTypeRef implements TypeRef {
   final String schemaClass;
   
   SchemaTypeRef(this.schemaClass);
+
+  @override
+  String get dataType => schemaClass;
   
   String toString() => 'schema($schemaClass)';
 }
@@ -207,7 +218,10 @@ class ListTypeRef implements TypeRef {
   String get base => "list";
   
   ListTypeRef(this.subType);
-  
+
+  @override
+  String get dataType => base;
+
   String toString() => 'list($subType)';
 }
 

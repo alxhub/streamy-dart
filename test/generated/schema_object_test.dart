@@ -33,7 +33,7 @@ main() {
       expect(foo['baz'], equals(2));
     });
     test('JsonCorrectlyPopulated', () {
-      expect(marshaller.marshalFoo(foo), equals({
+      expect(streamy.jsonMarshal(foo), equals({
         'id': 1,
         'bar': 'bar',
         'baz': 2,
@@ -42,7 +42,7 @@ main() {
     });
     test('RemovedKeyNotPresentInJson', () {
       expect(foo.removeBaz(), equals(2));
-      expect(marshaller.marshalFoo(foo), equals({
+      expect(streamy.jsonMarshal(foo), equals({
         'id': 1,
         'bar': 'bar',
         'qux': '1234',
@@ -54,7 +54,8 @@ main() {
     });
     test('SerializeListToJson', () {
       var bar = new Bar()..foos = [new Foo()..id = 321];
-      bar = marshaller.unmarshalBar(streamy.jsonParse(JSON.encode(marshaller.marshalBar(bar))));
+      bar = marshaller.unmarshalBar(
+          streamy.jsonParse(JSON.encode(streamy.jsonMarshal(bar))));
       expect(bar.foos.length, equals(1));
       expect(bar.foos[0].id, equals(321));
     });
@@ -66,7 +67,8 @@ main() {
       foo.quux = [1.5, 2.5, 3.5, 4.5];
       expect(foo.quux, equals([1.5, 2.5, 3.5, 4.5]));
       expect(foo['quux'], equals([1.5, 2.5, 3.5, 4.5]));
-      expect(marshaller.marshalFoo(foo)['quux'], equals(['1.5', '2.5', '3.5', '4.5']));
+      expect(streamy.jsonMarshal(foo)['quux'],
+          equals(['1.5', '2.5', '3.5', '4.5']));
     });
     test('type=number format=double works correctly', () {
       var foo2 = marshaller.unmarshalFoo(new ObservableMap.from({
@@ -84,10 +86,10 @@ main() {
       expect(foo2.quux, equals([2.5, 3.5, 4.5, 5.5]));
     });
     test("clone()'d entities are equal", () {
-      expect(streamy.Entity.deepEquals(foo.clone(), foo), equals(true));
+      expect(streamy.EntityUtils.deepEquals(foo.clone(), foo), equals(true));
       var bar = new Bar()
         ..foos = [foo];
-      expect(streamy.Entity.deepEquals(bar.clone(), bar), equals(true));
+      expect(streamy.EntityUtils.deepEquals(bar.clone(), bar), equals(true));
     });
     test('clone() is deep', () {
       var bar = new Bar()
@@ -104,7 +106,7 @@ main() {
       // This tests that the [EntityWrapper] subclasses aren't identical, but
       // not the [RawEntity] entities inside them.
       bar.foos[0].baz = 42;
-      expect(streamy.Entity.deepEquals(bar, bar2), equals(false));
+      expect(streamy.EntityUtils.deepEquals(bar, bar2), equals(false));
     });
     test('objects are observable', () {
       var foo = new Foo();
@@ -267,6 +269,14 @@ main() {
       }, count: 1));
       exDep.add(foo.id);
     });
+    test('should work with sub-classes', () {
+      Foo.addGlobal('testGlobal', (e) {
+        expect(e.runtimeType, FooSubclass);
+        return 'magic';
+      });
+      var subject = new FooSubclass();
+      expect(subject['global.testGlobal'], 'magic');
+    });
   });
   group('patch()', () {
     test('works like clone() for a new basic entity', () {
@@ -283,7 +293,7 @@ main() {
         ..id = 1
         ..bar = 'this changes'
         ..quux = [1.1, 1.2];
-      streamy.freezeForTest(e);
+      e.freeze();
       var c = e.clone();
       c.bar = 'this has changed';
       var p = c.patch();
@@ -307,12 +317,12 @@ main() {
       var bar = new Bar()
         ..primary = foo1
         ..foos = [foo2, foo3];
-      streamy.freezeForTest(bar);
+      bar.freeze();
       var barC = bar.clone();
       barC.primary.bar = 'changed!';
       barC.foos[0].remove('bar');
       var barP = barC.patch();
-      expect(JSON.encode(marshaller.marshalBar(barP)),
+      expect(JSON.encode(streamy.jsonMarshal(barP)),
           '{"primary":{"bar":"changed!"},"foos":[{"id":2},{"id":3,"bar":"this does not change"}]}');
     });
   });
@@ -324,6 +334,7 @@ main() {
       $some_entity_.addGlobal('test',
           ($some_entity_ e) => null);
     });
+
     test('should not appear in entity properties', () {
       new $some_entity_()
         ..$badly_named_property____$_______ = new fixnum.Int64(123);
@@ -368,8 +379,12 @@ main() {
           null,
           [null],
         ];
-      expect(JSON.encode(marshaller.marshalContext(subject)),
+      expect(JSON.encode(streamy.jsonMarshal(subject)),
           '{"facets":[[{"anchor":"a"},{"anchor":"b"}],[],null,[null]]}');
     });
   });
+}
+
+class FooSubclass extends Foo {
+
 }
